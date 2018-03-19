@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"strconv"
@@ -11,30 +10,34 @@ import (
 )
 
 // Parse Stdin and returns a Puzzle data structure
-func Parse() (*Puzzle, error) {
-	data, err := read()
+func Parse(filepath string) (*Puzzle, error) {
+	data, err := read(filepath)
 
 	if err != nil {
-		return &Puzzle{}, err
+		return nil, err
 	}
 
 	if data != nil {
 		puzzle, err := createPuzzle(data)
 
 		if err != nil {
-			return &Puzzle{}, err
+			return nil, err
 		}
 
 		return puzzle, err
 	}
 
-	return &Puzzle{}, UncaughtError{"parsing.go, func parse()"}
+	return nil, UncaughtError{"parsing.go, func parse()"}
 }
 
-func read() ([]byte, error) {
+func read(filepath string) ([]byte, error) {
 	var data []byte
 	buf := make([]byte, 8)
-	reader := bufio.NewReader(os.Stdin)
+	reader, err := os.Open(filepath)
+
+	if err != nil {
+		return nil, err
+	}
 
 	for {
 		len, err := reader.Read(buf)
@@ -58,11 +61,11 @@ func createPuzzle(data []byte) (*Puzzle, error) {
 	s, m, err := clean(data)
 
 	if err != nil {
-		return &Puzzle{}, err
+		return nil, err
 	}
 
 	if len(m) != s {
-		return &Puzzle{},
+		return nil,
 			fmt.Errorf(
 				"parse: size mismatch error, declared %v, got %v",
 				s,
@@ -74,7 +77,7 @@ func createPuzzle(data []byte) (*Puzzle, error) {
 		a, err := stringutils.ToIntArray(v)
 
 		if len(a) != s {
-			return &Puzzle{},
+			return nil,
 				fmt.Errorf(
 					"parse: length mismatch error on line %v\n    \"%v\"\nDeclared %v, got %v",
 					i,
@@ -85,7 +88,7 @@ func createPuzzle(data []byte) (*Puzzle, error) {
 		}
 
 		if err != nil {
-			return &Puzzle{}, err
+			return nil, err
 		}
 
 		tab = append(tab, a)

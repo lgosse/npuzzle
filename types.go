@@ -13,19 +13,22 @@ type Puzzle struct {
 	mut sync.Mutex
 }
 
-// Solve solves the puzzle
-func (p *Puzzle) solve() {
-
-}
-
 // String prints informations on Puzzle struct
 func (p *Puzzle) String() string {
-	s := fmt.Sprintf("Puzzle size: %v", p.s)
+	s := fmt.Sprintf("Size: %v", p.s)
 	tab := make([]string, 0)
 
-	for i, v := range p.m {
-		tab = append(tab, fmt.Sprintf("%-4v %v\n", i, v))
+	for i, ln := range p.m {
+		tab = append(tab, fmt.Sprintf("%v | ", i))
+		for _, elem := range ln {
+			tab = append(tab, fmt.Sprintf("%4v", elem))
+		}
+		tab = append(tab, "\n\n")
 	}
 
-	return fmt.Sprintf("%s\nMap:\n%s", s, strings.Join(tab, "\n"))
+	return fmt.Sprintf("%s\nMap:\n%s", s, strings.Join(tab, ""))
+}
+
+// Solution is the data structure containing solution to the puzzle
+type Solution struct {
 }
