@@ -27,16 +27,15 @@ func Solve(puzzle *Puzzle) error {
 	heap.Push(pq, initialState)
 
 	fmt.Printf("################# BEGIN ALGO ###############\n")
-	for pq.Len() != 0 && successNode == nil {
+	for pq.Len() != 0 {
 		curState := heap.Pop(pq).(*node)
 		curState.open = false
 		curState.closed = true
 
-		fmt.Printf("CUR: %v\nFINAL %v\n", curState.hash, finalState.hash)
 		if curState.hash == finalState.hash {
 			successNode = curState
 
-			continue
+			break
 		}
 
 		for _, v := range getPossibilities(curState.state) {
@@ -57,6 +56,7 @@ func Solve(puzzle *Puzzle) error {
 				heap.Push(pq, possibleState)
 			}
 		}
+
 	}
 
 	fmt.Printf("success: %v\nlen: %v\n", successNode, pq.Len())
@@ -138,7 +138,7 @@ func computeFinalState(m nodeState) node {
 
 	return node{
 		state: f,
-		hash:  fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprintf("%#v", f)))),
+		hash:  hashNodeState(f),
 	}
 }
 
