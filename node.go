@@ -1,9 +1,30 @@
 package main
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
+	"log"
 	"strings"
 )
+
+type nodeMap map[string]*node
+
+// get retrieves a node
+func (nm nodeMap) get(n node) *node {
+	m, ok := nm[n.hash]
+
+	if !ok {
+		m = &node{
+			hash:  n.hash,
+			state: n.state,
+		}
+
+		nm[n.hash] = m
+	}
+
+	return m
+}
 
 type nodeState [][]int
 
@@ -21,6 +42,25 @@ func (state nodeState) String() string {
 	return strings.Join(tab, "")
 }
 
+func (state nodeState) Copy() nodeState {
+	var mod bytes.Buffer
+	enc := gob.NewEncoder(&mod)
+	dec := gob.NewDecoder(&mod)
+
+	err := enc.Encode(state)
+	if err != nil {
+		log.Fatal("nodeState: copy: encode error: ", err)
+	}
+
+	var cpy [][]int
+	err = dec.Decode(&cpy)
+	if err != nil {
+		log.Fatal("nodeState: copy: decode error: ", err)
+	}
+
+	return cpy
+}
+
 type node struct {
 	state  nodeState
 	hash   string
@@ -32,7 +72,20 @@ type node struct {
 	index  int
 }
 
+func (n node) String() string {
+	return fmt.Sprintf(
+		"state:\n%s\nhash: %v\ncost: %v\nrank: %v\nopen: %v\nclosed: %v\nindex: %v\n",
+		n.state,
+		n.hash,
+		n.cost,
+		n.rank,
+		n.open,
+		n.closed,
+		n.index,
+	)
+}
+
 // Heuristic calls the selected heuristic
-func (n node) Heuristic() {
-	selectedHeuristic(n.state)
+func (n node) Heuristic() float64 {
+	return selectedHeuristic(n.state)
 }

@@ -1,9 +1,8 @@
 package main
 
 import (
-	"bytes"
+	"container/heap"
 	"crypto/sha256"
-	"encoding/gob"
 	"fmt"
 	"log"
 )
@@ -12,12 +11,61 @@ var finalState node
 
 // Solve finds the solution (if it exists) for the provided puzzle
 func Solve(puzzle *Puzzle) error {
+	var successNode *node
+
 	finalState = computeFinalState(puzzle.m)
+	nmap := nodeMap{}
+	initialState := nmap.get(node{
+		hash:  hashNodeState(puzzle.m),
+		state: puzzle.m,
+	})
+	initialState.open = true
+
+	pq := &priorityQueue{}
+	heap.Init(pq)
+
+	heap.Push(pq, initialState)
+
+	fmt.Printf("################# BEGIN ALGO ###############\n")
+	for pq.Len() != 0 && successNode == nil {
+		curState := heap.Pop(pq).(*node)
+		curState.open = false
+		curState.closed = true
+
+		fmt.Printf("CUR: %v\nFINAL %v\n", curState.hash, finalState.hash)
+		if curState.hash == finalState.hash {
+			successNode = curState
+
+			continue
+		}
+
+		for _, v := range getPossibilities(curState.state) {
+			cost := curState.cost + 1
+			possibleState := nmap.get(v)
+
+			if cost < possibleState.cost && possibleState.open {
+				heap.Remove(pq, possibleState.index)
+				possibleState.open = false
+				possibleState.closed = false
+			}
+
+			if !possibleState.open && !possibleState.closed {
+				possibleState.cost = cost
+				possibleState.open = true
+				possibleState.rank = cost + possibleState.Heuristic()
+				possibleState.parent = curState
+				heap.Push(pq, possibleState)
+			}
+		}
+	}
+
+	fmt.Printf("success: %v\nlen: %v\n", successNode, pq.Len())
+	fmt.Printf("################# END ALGO ###############\n")
 
 	return nil
 }
 
-func computeFinalState(m [][]int) node {
+func computeFinalState(m nodeState) node {
 	l := len(m)
 	f := make([][]int, l)
 	values := make([]int, l*l)
@@ -105,6 +153,7 @@ Loop:
 		for j, v := range ln {
 			if v == 0 {
 				y, x = i, j
+
 				break Loop
 			}
 		}
@@ -129,20 +178,7 @@ Loop:
 func getPossibility(m nodeState, move Action, x int, y int) node {
 	var tmp int
 
-	var mod bytes.Buffer
-	enc := gob.NewEncoder(&mod)
-	dec := gob.NewDecoder(&mod)
-
-	err := enc.Encode(m)
-	if err != nil {
-		log.Fatal("npuzzle: solve: encode error: ", err)
-	}
-
-	var cpy [][]int
-	err = dec.Decode(&cpy)
-	if err != nil {
-		log.Fatal("npuzzle: solve: decode error: ", err)
-	}
+	cpy := m.Copy()
 
 	switch move {
 	case UP:
@@ -183,7 +219,11 @@ func getPossibility(m nodeState, move Action, x int, y int) node {
 	}
 
 	return node{
-		hash:  fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprintf("%#v", cpy)))),
+		hash:  hashNodeState(cpy),
 		state: cpy,
 	}
+}
+
+func hashNodeState(state nodeState) string {
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprintf("%#v", state))))
 }
