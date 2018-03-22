@@ -15,7 +15,7 @@ func Solve(puzzle *Puzzle) error {
 	var successNode *node
 
 	finalState = computeFinalState(puzzle.m)
-	nmap := nodeMap{}
+	nmap := nodeMap{nodes: map[string]*node{}}
 	initialState := nmap.get(node{
 		hash:  hashNodeState(puzzle.m),
 		state: puzzle.m,
@@ -31,11 +31,11 @@ func Solve(puzzle *Puzzle) error {
 	HeapPushSync(pq, initialState, done)
 	<-done
 
-	fmt.Printf("################# BEGIN ALGO ###############\n")
 	winChan := make(chan *node, 10)
 	errChan := make(chan error, 10)
-	go astar(pq, nmap, winChan, errChan, 1)
-	// go astar(pq, nmap, winChan, errChan, 2)
+	for i := 0; i < NBGOROUTINES; i++ {
+		go astar(pq, &nmap, winChan, errChan, 1)
+	}
 
 	select {
 	case successNode := <-winChan:
@@ -47,16 +47,26 @@ func Solve(puzzle *Puzzle) error {
 	stopWatchHeapOps()
 
 	fmt.Printf("success: %v\nlen: %v\n", successNode, pq.Len())
-	fmt.Printf("################# END ALGO ###############\n")
 
 	return nil
 }
 
-func astar(pq *priorityQueue, nmap nodeMap, winChan chan *node, errChan chan error, id int) {
+func astar(pq *priorityQueue, nmap *nodeMap, winChan chan *node, errChan chan error, id int) {
+	var curState *node
 	first := true
 	for pq.Len() != 0 || first {
 		first = false
-		curState := HeapPop(pq).(*node)
+
+		pq.c.L.Lock()
+		for {
+			if pq.Len() != 0 {
+				curState = HeapPop(pq).(*node)
+				break
+			}
+			pq.c.Wait()
+		}
+		pq.c.L.Unlock()
+
 		curState.open = false
 		curState.closed = true
 

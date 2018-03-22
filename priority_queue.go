@@ -2,7 +2,6 @@ package main
 
 import (
 	"container/heap"
-	"fmt"
 	"sync"
 )
 
@@ -92,6 +91,7 @@ func HeapPushSync(h *priorityQueue, x interface{}, done chan bool) {
 		x:    x,
 		done: done,
 	}
+	h.c.Signal()
 }
 
 // HeapPush safely pushes an item to a heap interface
@@ -100,6 +100,7 @@ func HeapPush(h *priorityQueue, x interface{}) {
 		h: h,
 		x: x,
 	}
+	h.c.Signal()
 }
 
 // HeapRemove safely removes an item from a heap interface
@@ -134,9 +135,7 @@ func watchHeapOps() chan bool {
 				popMsg.result <- heap.Pop(popMsg.h)
 			case pushMsg := <-heapPushChan:
 				{
-					fmt.Printf("BEGIN PUSH\n")
 					heap.Push(pushMsg.h, pushMsg.x)
-					fmt.Printf("FINISHED PUSH\n")
 					if pushMsg.done != nil {
 						close(pushMsg.done)
 					}

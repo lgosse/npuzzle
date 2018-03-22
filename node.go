@@ -6,13 +6,19 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 )
 
-type nodeMap map[string]*node
+type nodeMap struct {
+	sync.Mutex
+	nodes map[string]*node
+}
 
 // get retrieves a node
-func (nm nodeMap) get(n node) *node {
-	m, ok := nm[n.hash]
+func (nm *nodeMap) get(n node) *node {
+	nm.Lock()
+	m, ok := nm.nodes[n.hash]
+	nm.Unlock()
 
 	if !ok {
 		m = &node{
@@ -20,7 +26,9 @@ func (nm nodeMap) get(n node) *node {
 			state: n.state,
 		}
 
-		nm[n.hash] = m
+		nm.Lock()
+		nm.nodes[n.hash] = m
+		nm.Unlock()
 	}
 
 	return m
