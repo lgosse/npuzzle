@@ -7,7 +7,8 @@ const (
 
 // Defines the different implemented heuristics available
 const (
-	MANNHATAN = "manhattan"
-	MISPLACED = "misplaced"
-	LINEAR    = "linear-conflict"
+	MANHATTAN   = "manhattan"
+	MISPLACED   = "misplaced"
+	LINEAR      = "linear-conflict"
+	PERMUTATION = "permutation"
 )
