@@ -1,9 +1,7 @@
 package main
 
-const (
-	// RNDMAXSIZE is the auto-generated puzzle's max size
-	RNDMAXSIZE = 4
-)
+// RNDMAXSIZE is the auto-generated puzzle's max size
+const RNDMAXSIZE = 4
 
 // Defines the different implemented heuristics available
 const (
@@ -11,3 +9,6 @@ const (
 	MISPLACED = "misplaced"
 	LINEAR    = "linear-conflict"
 )
+
+// NBGOROUTINES represents the number of goroutines to be launched to solve the puzzle
+const NBGOROUTINES = 8
