@@ -12,4 +12,4 @@ const (
 )
 
 // NBGOROUTINES represents the number of goroutines to be launched to solve the puzzle
-const NBGOROUTINES = 8
+const NBGOROUTINES = 4

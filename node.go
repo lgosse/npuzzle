@@ -72,8 +72,8 @@ func (state nodeState) Copy() nodeState {
 type node struct {
 	state  nodeState
 	hash   string
-	cost   float64
-	rank   float64
+	cost   int
+	rank   int
 	parent *node
 	open   bool
 	closed bool
@@ -94,6 +94,6 @@ func (n node) String() string {
 }
 
 // Heuristic calls the selected heuristic
-func (n node) Heuristic() float64 {
+func (n node) Heuristic() int {
 	return selectedHeuristic(n.state)
 }

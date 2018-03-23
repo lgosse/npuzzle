@@ -5,12 +5,12 @@ import (
 )
 
 // selectedHeuristic represents the heuristic selected by the end user
-var selectedHeuristic func(state nodeState) float64
+var selectedHeuristic func(state nodeState) int
 
 // ManhattanHeuristic calculates the distance between each piece
 // and its final position
-func ManhattanHeuristic(state nodeState) float64 {
-	total := 0.0
+func ManhattanHeuristic(state nodeState) int {
+	total := 0
 
 	for y := range state {
 		for x := range state[y] {
@@ -21,7 +21,7 @@ func ManhattanHeuristic(state nodeState) float64 {
 			for by := range finalState.state {
 				for bx := range finalState.state[by] {
 					if finalState.state[by][bx] == toFind {
-						total += math.Pow(float64(x-bx), 2) + math.Pow(float64(y-by), 2)
+						total += int(math.Abs(float64(bx-x)) + math.Abs(float64(by-y)))
 						break Find
 					}
 				}
@@ -30,11 +30,11 @@ func ManhattanHeuristic(state nodeState) float64 {
 		}
 	}
 
-	return total / float64(len(state))
+	return total
 }
 
 // MisplacedHeuristic calculates the number of misplaced pieces
-func MisplacedHeuristic(state nodeState) float64 {
+func MisplacedHeuristic(state nodeState) int {
 	misplacedElems := 0
 
 	for y := range state {
@@ -45,12 +45,12 @@ func MisplacedHeuristic(state nodeState) float64 {
 		}
 	}
 
-	return float64(misplacedElems)
+	return misplacedElems
 }
 
 // LinearConflictHeuristic is the ManhattanHeuristic ponderated by
 // the conflict between some pieces and their final destination
-func LinearConflictHeuristic(state nodeState) float64 {
+func LinearConflictHeuristic(state nodeState) int {
 	return 1
 }
 
