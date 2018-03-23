@@ -2,6 +2,7 @@ package main
 
 import (
 	"container/heap"
+	"fmt"
 	"sync"
 )
 
@@ -21,6 +22,7 @@ func (pq priorityQueue) Less(i, j int) bool {
 
 // Swap swaps two element at specified indexes
 func (pq priorityQueue) Swap(i, j int) {
+	fmt.Printf("I: %v | J: %v | LEN: %v\n", i, j, pq.Len())
 	pq.heap[i], pq.heap[j] = pq.heap[j], pq.heap[i]
 	pq.heap[i].index = i
 	pq.heap[j].index = j
