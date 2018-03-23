@@ -9,6 +9,7 @@ const (
 	MISPLACED   = "misplaced"
 	LINEAR      = "linear-conflict"
 	PERMUTATION = "permutation"
+	TILESOUT    = "tiles-out"
 )
 
 // NBGOROUTINES represents the number of goroutines to be launched to solve the puzzle

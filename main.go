@@ -12,6 +12,7 @@ func usage() string {
 		" - misplaced\n",
 		" - linear-conflict\n",
 		" - permutation\n",
+		" - tiles-out\n",
 	)
 }
 
@@ -32,6 +33,9 @@ func handleArgs() (*Puzzle, error) {
 		break
 	case PERMUTATION:
 		selectedHeuristic = PermutationHeuristic
+		break
+	case TILESOUT:
+		selectedHeuristic = TilesOutHeuristic
 		break
 	default:
 		return nil, fmt.Errorf(usage())
@@ -55,6 +59,11 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 
+		return
+	}
+
+	if puzzle.IsValid() == false {
+		fmt.Println("Error: le puzzle n'est pas solvable")
 		return
 	}
 

@@ -223,6 +223,43 @@ func getPossibility(m nodeState, move Action, x int, y int) node {
 	}
 }
 
+// IsValid return true if the npuzzle is solvable
+func (puzzle *Puzzle) IsValid() bool {
+	state := puzzle.m
+	f := Serpentard(state)
+	nbInvert := 0
+
+	for i := 0; i < len(f); i++ {
+		if f[i] != 0 {
+			for j := i + 1; j < len(f); j++ {
+				if f[j] != 0 && f[i] > f[j] {
+					nbInvert++
+				}
+			}
+		}
+	}
+	if len(state)%2 == 1 {
+		if nbInvert%2 == 0 {
+			return true
+		}
+	} else {
+		i := 0
+		for f[i] != 0 {
+			i++
+		}
+		if (i/len(state))%2 == 0 {
+			if nbInvert%2 == 1 {
+				return true
+			}
+		} else {
+			if nbInvert%2 == 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func hashNodeState(state nodeState) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprintf("%#v", state))))
 }

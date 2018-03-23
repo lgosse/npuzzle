@@ -148,7 +148,8 @@ func hasToPermuteVertical(x, y, y2 int, state nodeState) bool {
 	return false
 }
 
-func serpentard(state nodeState) []int {
+// Serpentard transform the double array into a linear array
+func Serpentard(state nodeState) []int {
 	l := len(state)
 
 	f := make([][]int, l)
@@ -190,7 +191,7 @@ func serpentard(state nodeState) []int {
 // PermutationHeuristic calculate the sum of permutations to execute in
 // order to get every pieces in the right place
 func PermutationHeuristic(state nodeState) int {
-	sort := serpentard(state)
+	sort := Serpentard(state)
 	len := len(sort)
 	nb := 0
 	i := 0
@@ -207,4 +208,31 @@ func PermutationHeuristic(state nodeState) int {
 		i++
 	}
 	return nb
+}
+
+// TilesOutHeuristic take the sum of tiles that are not in the right colunm and the right row
+func TilesOutHeuristic(state nodeState) int {
+	len := len(state)
+	nb := 0
+	for i := 0; i < len; i++ {
+		for j := 0; j < len; j++ {
+			if state[i][j] != 0 {
+				nb -= len - 1
+				k, l := i, j
+				for k = 0; k < len; k++ {
+					if state[i][j] != finalState.state[k][l] {
+						nb++
+					}
+				}
+				k, l = i, j
+				nb -= len - 1
+				for l = 0; l < len; l++ {
+					if state[i][j] != finalState.state[k][l] {
+						nb++
+					}
+				}
+			}
+		}
+	}
+	return (nb)
 }
