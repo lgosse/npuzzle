@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"log"
+	"sync"
 )
 
 var finalState node
@@ -13,28 +14,66 @@ var finalState node
 func Solve(puzzle *Puzzle) error {
 	var successNode *node
 	finalState = computeFinalState(puzzle.m)
-	nmap := nodeMap{}
+	nmap := nodeMap{nodes: map[string]*node{}}
 	initialState := nmap.get(node{
 		hash:  hashNodeState(puzzle.m),
 		state: puzzle.m,
 	})
 	initialState.open = true
 
-	pq := &priorityQueue{}
+	pq := &priorityQueue{c: sync.NewCond(new(sync.Mutex))}
 	heap.Init(pq)
 
-	heap.Push(pq, initialState)
+	quitChan = watchHeapOps()
 
-	fmt.Printf("################# BEGIN ALGO ###############\n")
-	for pq.Len() != 0 {
-		curState := heap.Pop(pq).(*node)
+	done := make(chan bool, 1)
+	HeapPushSync(pq, initialState, done)
+	<-done
+
+	winChan := make(chan *node, 10)
+	errChan := make(chan error, 10)
+	for i := 0; i < NBGOROUTINES; i++ {
+		go astar(pq, &nmap, winChan, errChan, 1)
+	}
+
+	select {
+	case successNode := <-winChan:
+		fmt.Printf("success: %v\nlen: %v\n", successNode, pq.Len())
+	case err := <-errChan:
+		return err
+	}
+
+	stopWatchHeapOps()
+
+	fmt.Printf("success: %v\nlen: %v\n", successNode, pq.Len())
+
+	return nil
+}
+
+func astar(pq *priorityQueue, nmap *nodeMap, winChan chan *node, errChan chan error, id int) {
+	var curState *node
+	first := true
+	for pq.Len() != 0 || first {
+		first = false
+
+		pq.c.L.Lock()
+		for {
+			if pq.Len() != 0 {
+				curState = HeapPop(pq).(*node)
+				break
+			}
+			pq.c.Wait()
+		}
+		pq.c.L.Unlock()
+
 		curState.open = false
 		curState.closed = true
 
 		if curState.hash == finalState.hash {
-			successNode = curState
+			winChan <- curState
+			close(winChan)
 
-			break
+			return
 		}
 
 		for _, v := range getPossibilities(curState.state) {
@@ -42,7 +81,7 @@ func Solve(puzzle *Puzzle) error {
 			possibleState := nmap.get(v)
 
 			if cost < possibleState.cost && possibleState.open {
-				heap.Remove(pq, possibleState.index)
+				HeapRemove(pq, possibleState.index)
 				possibleState.open = false
 				possibleState.closed = false
 			}
@@ -52,16 +91,13 @@ func Solve(puzzle *Puzzle) error {
 				possibleState.open = true
 				possibleState.rank = cost + possibleState.Heuristic()
 				possibleState.parent = curState
-				heap.Push(pq, possibleState)
+
+				done := make(chan bool)
+				HeapPushSync(pq, possibleState, done)
+				<-done
 			}
 		}
-
 	}
-
-	fmt.Printf("success: %v\nlen: %v\n", successNode, pq.Len())
-	fmt.Printf("################# END ALGO ###############\n")
-
-	return nil
 }
 
 func computeFinalState(m nodeState) node {
