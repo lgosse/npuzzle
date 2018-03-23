@@ -10,8 +10,8 @@ func usage() string {
 		"usage: npuzzle HEURISTIC [file]\nAvailable heuristics:\n%s%s%s%s",
 		" - manhattan\n",
 		" - misplaced\n",
-		" - manhattan+\n",
-		" - permutation+\n",
+		" - linear-conflict\n",
+		" - permutation\n",
 	)
 }
 

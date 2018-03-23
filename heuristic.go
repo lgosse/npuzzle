@@ -51,7 +51,101 @@ func MisplacedHeuristic(state nodeState) int {
 // LinearConflictHeuristic is the ManhattanHeuristic ponderated by
 // the conflict between some pieces and their final destination
 func LinearConflictHeuristic(state nodeState) int {
-	return 1
+	heuristic := ManhattanHeuristic(state)
+
+	vert := verticalLinearConflict(state)
+
+	hor := horizontalLinearConflict(state)
+
+	heuristic += vert + hor
+
+	return heuristic
+}
+
+func verticalLinearConflict(state nodeState) int {
+	nb := 0
+	for x := range state {
+		for y := range state[x] {
+			if state[y][x] != finalState.state[y][x] {
+				for i := 0; i < len(finalState.state); i++ {
+					if hasToPermuteVertical(x, y, i, state) {
+						nb += 2
+					}
+				}
+			}
+		}
+	}
+
+	return nb
+}
+
+func horizontalLinearConflict(state nodeState) int {
+	nb := 0
+	for y := range state {
+		for x := range state[y] {
+			if state[y][x] != finalState.state[y][x] {
+				for i := 0; i < len(finalState.state); i++ {
+					if hasToPermuteHorizontal(y, x, i, state) {
+						nb += 2
+					}
+				}
+			}
+		}
+	}
+
+	return nb
+}
+
+func hasToPermuteHorizontal(y, x, x2 int, state nodeState) bool {
+	fstTileInRow := false
+	idxFst := 0
+	scdTileInRow := false
+	idxScd := 0
+
+	for i := range state[y] {
+		if state[y][x] == state[y][i] {
+			fstTileInRow = true
+			idxFst = i
+		}
+		if state[y][x2] == state[y][i] {
+			scdTileInRow = true
+			idxScd = i
+		}
+	}
+
+	if fstTileInRow && scdTileInRow {
+		if idxFst > idxScd {
+			return true
+		}
+	}
+
+	return false
+}
+
+func hasToPermuteVertical(x, y, y2 int, state nodeState) bool {
+	fstTileInCol := false
+	idxFst := 0
+	scdTileInCol := false
+	idxScd := 0
+
+	for i := range state[y] {
+		if state[y][x] == state[i][x] {
+			fstTileInCol = true
+			idxFst = i
+		}
+		if state[y2][x] == state[i][x] {
+			scdTileInCol = true
+			idxScd = i
+		}
+	}
+
+	if fstTileInCol && scdTileInCol {
+		if idxFst > idxScd {
+			return true
+		}
+	}
+
+	return false
 }
 
 func serpentard(state nodeState) []int {
@@ -93,8 +187,9 @@ func serpentard(state nodeState) []int {
 	return snake
 }
 
-// PermutationHeuristic pourquoi cette merde oblige a faire des commentaires de merde inutiles ????!!!!
-func PermutationHeuristic(state nodeState) float64 {
+// PermutationHeuristic calculate the sum of permutations to execute in
+// order to get every pieces in the right place
+func PermutationHeuristic(state nodeState) int {
 	sort := serpentard(state)
 	len := len(sort)
 	nb := 0
@@ -111,5 +206,5 @@ func PermutationHeuristic(state nodeState) float64 {
 		}
 		i++
 	}
-	return float64(nb)
+	return nb
 }
