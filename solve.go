@@ -13,7 +13,6 @@ var finalState node
 // Solve finds the solution (if it exists) for the provided puzzle
 func Solve(puzzle *Puzzle) error {
 	var successNode *node
-	finalState = computeFinalState(puzzle.m)
 	nmap := nodeMap{nodes: map[string]*node{}}
 	initialState := nmap.get(node{
 		hash:  hashNodeState(puzzle.m),
@@ -223,10 +222,46 @@ func getPossibility(m nodeState, move Action, x int, y int) node {
 	}
 }
 
+func transform(puzzle [][]int) []int {
+	alter := make([][]int, len(puzzle))
+
+	nb := 1
+	for i := range alter {
+		alter[i] = make([]int, len(puzzle))
+		for j := range alter[i] {
+			if nb == len(puzzle)*len(puzzle) {
+				nb = 0
+			}
+			alter[i][j] = nb
+			nb++
+		}
+	}
+
+	findEqTile := func(tile int) int {
+		for y := range alter {
+			for x := range alter[y] {
+				if alter[y][x] == tile {
+					return y*len(alter) + x
+				}
+			}
+		}
+		return -1
+	}
+
+	serp := make([]int, len(alter)*len(alter))
+	for i := range puzzle {
+		for j := range puzzle[i] {
+			pos := findEqTile(finalState.state[i][j])
+			serp[pos] = puzzle[i][j]
+		}
+	}
+	return serp
+}
+
 // IsValid return true if the npuzzle is solvable
 func (puzzle *Puzzle) IsValid() bool {
 	state := puzzle.m
-	f := Serpentard(state)
+	f := transform(state)
 	nbInvert := 0
 
 	for i := 0; i < len(f); i++ {
@@ -238,6 +273,7 @@ func (puzzle *Puzzle) IsValid() bool {
 			}
 		}
 	}
+	fmt.Println(nbInvert)
 	if len(state)%2 == 1 {
 		if nbInvert%2 == 0 {
 			return true
@@ -247,7 +283,7 @@ func (puzzle *Puzzle) IsValid() bool {
 		for f[i] != 0 {
 			i++
 		}
-		if (i/len(state))%2 == 0 {
+		if (len(state)-i/len(state))%2 == 0 {
 			if nbInvert%2 == 1 {
 				return true
 			}
