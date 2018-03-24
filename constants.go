@@ -5,9 +5,11 @@ const RNDMAXSIZE = 4
 
 // Defines the different implemented heuristics available
 const (
-	MANNHATAN = "manhattan"
-	MISPLACED = "misplaced"
-	LINEAR    = "linear-conflict"
+	MANHATTAN   = "manhattan"
+	MISPLACED   = "misplaced"
+	LINEAR      = "linear-conflict"
+	PERMUTATION = "permutation"
+	TILESOUT    = "tiles-out"
 )
 
 // NBGOROUTINES represents the number of goroutines to be launched to solve the puzzle

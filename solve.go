@@ -13,7 +13,6 @@ var finalState node
 // Solve finds the solution (if it exists) for the provided puzzle
 func Solve(puzzle *Puzzle) error {
 	var successNode *node
-
 	finalState = computeFinalState(puzzle.m)
 	nmap := nodeMap{nodes: map[string]*node{}}
 	initialState := nmap.get(node{
@@ -108,67 +107,31 @@ func computeFinalState(m nodeState) node {
 	for i := range values {
 		values[i] = i + 1
 	}
-	values[l*l-1] = 0
-
-	curX := 0
-	curY := 0
-	curDir := RIGHT
-
+	values[len(values)-1] = 0
 	for i := range f {
 		f[i] = make([]int, l)
 	}
+	i, j := 0, -1
 
-	for _, v := range values {
-		f[curY][curX] = v
-
-		switch curDir {
-		case RIGHT:
-			{
-				if curX+1 < l && f[curY][curX+1] == 0 {
-					curX++
-				} else {
-					curY++
-					curDir = DOWN
-				}
-
-				break
-			}
-
-		case DOWN:
-			{
-				if curY+1 < l && f[curY+1][curX] == 0 {
-					curY++
-				} else {
-					curX--
-					curDir = LEFT
-				}
-
-				break
-			}
-
-		case LEFT:
-			{
-				if curX-1 >= 0 && f[curY][curX-1] == 0 {
-					curX--
-				} else {
-					curY--
-					curDir = UP
-				}
-
-				break
-			}
-
-		case UP:
-			{
-				if curY-1 >= 0 && f[curY-1][curX] == 0 {
-					curY--
-				} else {
-					curX++
-					curDir = RIGHT
-				}
-
-				break
-			}
+	for value := 0; value < len(values); i++ {
+		for j++; j < l && f[i][j] == 0; j++ {
+			f[i][j] = values[value]
+			value++
+		}
+		j--
+		for i++; i < l && f[i][j] == 0; i++ {
+			f[i][j] = values[value]
+			value++
+		}
+		i--
+		for j--; j >= 0 && f[i][j] == 0; j-- {
+			f[i][j] = values[value]
+			value++
+		}
+		j++
+		for i--; i >= 0 && f[i][j] == 0; i-- {
+			f[i][j] = values[value]
+			value++
 		}
 	}
 
@@ -258,6 +221,43 @@ func getPossibility(m nodeState, move Action, x int, y int) node {
 		hash:  hashNodeState(cpy),
 		state: cpy,
 	}
+}
+
+// IsValid return true if the npuzzle is solvable
+func (puzzle *Puzzle) IsValid() bool {
+	state := puzzle.m
+	f := Serpentard(state)
+	nbInvert := 0
+
+	for i := 0; i < len(f); i++ {
+		if f[i] != 0 {
+			for j := i + 1; j < len(f); j++ {
+				if f[j] != 0 && f[i] > f[j] {
+					nbInvert++
+				}
+			}
+		}
+	}
+	if len(state)%2 == 1 {
+		if nbInvert%2 == 0 {
+			return true
+		}
+	} else {
+		i := 0
+		for f[i] != 0 {
+			i++
+		}
+		if (i/len(state))%2 == 0 {
+			if nbInvert%2 == 1 {
+				return true
+			}
+		} else {
+			if nbInvert%2 == 0 {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func hashNodeState(state nodeState) string {

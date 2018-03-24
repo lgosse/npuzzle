@@ -2,7 +2,6 @@ package main
 
 import (
 	"container/heap"
-	"fmt"
 	"sync"
 )
 
@@ -17,15 +16,20 @@ func (pq priorityQueue) Len() int { return len(pq.heap) }
 // Less returns if the element at index i is or not less than the
 // element at index j
 func (pq priorityQueue) Less(i, j int) bool {
-	return pq.heap[i].rank < pq.heap[j].rank
+	if i < pq.Len() && i >= 0 && j < pq.Len() && j >= 0 {
+		return pq.heap[i].rank < pq.heap[j].rank
+	}
+
+	return true
 }
 
 // Swap swaps two element at specified indexes
 func (pq priorityQueue) Swap(i, j int) {
-	fmt.Printf("I: %v | J: %v | LEN: %v\n", i, j, pq.Len())
-	pq.heap[i], pq.heap[j] = pq.heap[j], pq.heap[i]
-	pq.heap[i].index = i
-	pq.heap[j].index = j
+	if i < pq.Len() && i >= 0 && j < pq.Len() && j >= 0 {
+		pq.heap[i], pq.heap[j] = pq.heap[j], pq.heap[i]
+		pq.heap[i].index = i
+		pq.heap[j].index = j
+	}
 }
 
 // Push pushes an ekement into the queue

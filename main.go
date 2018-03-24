@@ -7,10 +7,12 @@ import (
 
 func usage() string {
 	return fmt.Sprintf(
-		"usage: npuzzle HEURISTIC [file]\nAvailable heuristics:\n%s%s%s",
+		"usage: npuzzle HEURISTIC [file]\nAvailable heuristics:\n%s%s%s%s",
 		" - manhattan\n",
 		" - misplaced\n",
-		" - manhattan+\n",
+		" - linear-conflict\n",
+		" - permutation\n",
+		" - tiles-out\n",
 	)
 }
 
@@ -20,7 +22,7 @@ func handleArgs() (*Puzzle, error) {
 	}
 
 	switch os.Args[1] {
-	case MANNHATAN:
+	case MANHATTAN:
 		selectedHeuristic = ManhattanHeuristic
 		break
 	case MISPLACED:
@@ -28,6 +30,12 @@ func handleArgs() (*Puzzle, error) {
 		break
 	case LINEAR:
 		selectedHeuristic = LinearConflictHeuristic
+		break
+	case PERMUTATION:
+		selectedHeuristic = PermutationHeuristic
+		break
+	case TILESOUT:
+		selectedHeuristic = TilesOutHeuristic
 		break
 	default:
 		return nil, fmt.Errorf(usage())
@@ -51,6 +59,11 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 
+		return
+	}
+
+	if puzzle.IsValid() == false {
+		fmt.Println("Error: le puzzle n'est pas solvable")
 		return
 	}
 
