@@ -47,7 +47,6 @@ func handleArgs() (*Puzzle, error) {
 		return Parse(os.Args[2])
 	}
 
-	fmt.Fprintf(os.Stderr, "npuzzle: Too many arguments\n")
 	return nil, nil
 }
 

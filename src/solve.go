@@ -50,17 +50,16 @@ func Solve(puzzle *Puzzle) error {
 
 	solution.Lock()
 	curNode := solution.node
+	totalCost := curNode.cost
+	defer fmt.Printf("Total nodes explored: %v\nMaximum number of nodes in memory: %v\n", solution.totalNodeExplored, solution.maxNodesExplored)
 	solution.Unlock()
 
-	for i := 0; curNode != nil; i++ {
+	for i := totalCost; curNode != nil; i-- {
 		if curNode != nil && curNode.state != nil {
 			defer fmt.Printf("STEP %v:\n%v\n", i, curNode.state)
 		}
 		curNode = curNode.parent
 	}
-	solution.Lock()
-	defer solution.Unlock()
-	defer fmt.Sprintf("Total nodes explored: %v\nMaximum number of nodes in memory: %v\n", solution.totalNodeExplored, solution.maxNodesExplored)
 
 	return nil
 }
