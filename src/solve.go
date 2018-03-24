@@ -13,9 +13,8 @@ var finalState node
 // Solution represents the data structure used to represent the found puzzle solution
 type Solution struct {
 	sync.Mutex
-	totalNodeExplored int
-	maxNodesExplored  int
-	node              *node
+	maxNodesExplored int
+	node             *node
 }
 
 var solution = &Solution{}
@@ -51,7 +50,7 @@ func Solve(puzzle *Puzzle) error {
 	solution.Lock()
 	curNode := solution.node
 	totalCost := curNode.cost
-	defer fmt.Printf("Total nodes explored: %v\nMaximum number of nodes in memory: %v\n", solution.totalNodeExplored, solution.maxNodesExplored)
+	defer fmt.Printf("Total nodes to path: %v\nTotal nodes explored: %v\nMaximum nodes in memory: %v\n", totalCost, len(nmap.nodes), solution.maxNodesExplored)
 	solution.Unlock()
 
 	for i := totalCost; curNode != nil; i-- {
@@ -110,6 +109,12 @@ func astar(pq *priorityQueue, nmap *nodeMap, winChan chan *node, id int) {
 				done := make(chan bool)
 				HeapPushSync(pq, possibleState, done)
 				<-done
+
+				solution.Lock()
+				if solution.maxNodesExplored < pq.Len() {
+					solution.maxNodesExplored = pq.Len()
+				}
+				solution.Unlock()
 			}
 		}
 	}
