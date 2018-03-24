@@ -103,7 +103,13 @@ func astar(pq *priorityQueue, nmap *nodeMap, winChan chan *node, id int) {
 			if !possibleState.open && !possibleState.closed {
 				possibleState.cost = cost
 				possibleState.open = true
-				possibleState.rank = cost + possibleState.Heuristic()
+				if greedySearch {
+					possibleState.rank = possibleState.Heuristic()
+				} else if uniformSearch {
+					possibleState.rank = cost
+				} else {
+					possibleState.rank = cost + possibleState.Heuristic()
+				}
 				possibleState.parent = curState
 
 				done := make(chan bool)
