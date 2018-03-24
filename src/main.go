@@ -7,7 +7,7 @@ import (
 
 func usage() string {
 	return fmt.Sprintf(
-		"usage: npuzzle HEURISTIC [file]\nAvailable heuristics:\n%s%s%s%s",
+		"usage: npuzzle HEURISTIC [file]\nAvailable heuristics:\n%s%s%s%s%s",
 		" - manhattan\n",
 		" - misplaced\n",
 		" - linear-conflict\n",

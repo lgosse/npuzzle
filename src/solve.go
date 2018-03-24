@@ -10,9 +10,18 @@ import (
 
 var finalState node
 
+// Solution represents the data structure used to represent the found puzzle solution
+type Solution struct {
+	sync.Mutex
+	totalNodeExplored int
+	maxNodesExplored  int
+	node              *node
+}
+
+var solution = &Solution{}
+
 // Solve finds the solution (if it exists) for the provided puzzle
 func Solve(puzzle *Puzzle) error {
-	var successNode *node
 	finalState = computeFinalState(puzzle.m)
 	nmap := nodeMap{nodes: map[string]*node{}}
 	initialState := nmap.get(node{
@@ -31,28 +40,35 @@ func Solve(puzzle *Puzzle) error {
 	<-done
 
 	winChan := make(chan *node, 10)
-	errChan := make(chan error, 10)
 	for i := 0; i < NBGOROUTINES; i++ {
-		go astar(pq, &nmap, winChan, errChan, 1)
+		go astar(pq, &nmap, winChan, 1)
 	}
 
-	select {
-	case successNode := <-winChan:
-		fmt.Printf("success: %v\nlen: %v\n", successNode, pq.Len())
-	case err := <-errChan:
-		return err
-	}
+	solution.node = <-winChan
 
 	stopWatchHeapOps()
 
-	fmt.Printf("success: %v\nlen: %v\n", successNode, pq.Len())
+	solution.Lock()
+	curNode := solution.node
+	solution.Unlock()
+
+	for i := 0; curNode != nil; i++ {
+		if curNode != nil && curNode.state != nil {
+			defer fmt.Printf("STEP %v:\n%v\n", i, curNode.state)
+		}
+		curNode = curNode.parent
+	}
+	solution.Lock()
+	defer solution.Unlock()
+	defer fmt.Sprintf("Total nodes explored: %v\nMaximum number of nodes in memory: %v\n", solution.totalNodeExplored, solution.maxNodesExplored)
 
 	return nil
 }
 
-func astar(pq *priorityQueue, nmap *nodeMap, winChan chan *node, errChan chan error, id int) {
+func astar(pq *priorityQueue, nmap *nodeMap, winChan chan *node, id int) {
 	var curState *node
 	first := true
+
 	for pq.Len() != 0 || first {
 		first = false
 
