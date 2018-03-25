@@ -21,7 +21,6 @@ var solution = &Solution{}
 
 // Solve finds the solution (if it exists) for the provided puzzle
 func Solve(puzzle *Puzzle) error {
-	finalState = computeFinalState(len(puzzle.m))
 	nmap := nodeMap{nodes: map[string]*node{}}
 	initialState := nmap.get(node{
 		hash:  hashNodeState(puzzle.m),
@@ -250,39 +249,69 @@ func getPossibility(m nodeState, move Action, x int, y int) node {
 
 // IsValid return true if the npuzzle is solvable
 func (puzzle *Puzzle) IsValid() bool {
-	state := puzzle.m
-	f := Serpentard(state)
-	nbInvert := 0
+	var x1, y1, x2, y2 int
+	sz := len(finalState.state)
+	board := puzzle.m
+	boardInv := getInversions(board)
+	finalInv := getInversions(finalState.state)
 
-	for i := 0; i < len(f); i++ {
-		if f[i] != 0 {
-			for j := i + 1; j < len(f); j++ {
-				if f[j] != 0 && f[i] > f[j] {
-					nbInvert++
+	if sz%2 == 0 {
+	BoardFindEmptyLoop:
+		for i := range board {
+			for j := range board[i] {
+				if board[i][j] == 0 {
+					x1, y1 = j, i
+
+					break BoardFindEmptyLoop
 				}
 			}
 		}
-	}
-	if len(state)%2 == 1 {
-		if nbInvert%2 == 0 {
-			return true
-		}
-	} else {
-		i := 0
-		for f[i] != 0 {
-			i++
-		}
-		if (i/len(state))%2 == 0 {
-			if nbInvert%2 == 1 {
-				return true
-			}
-		} else {
-			if nbInvert%2 == 0 {
-				return true
+
+	FinalFindEmptyLoop:
+		for i := range finalState.state {
+			for j := range finalState.state[i] {
+				if finalState.state[i][j] == 0 {
+					x2, y2 = j, i
+
+					break FinalFindEmptyLoop
+				}
 			}
 		}
+
+		boardInv += sz*sz - (y1*sz + x1)
+		finalInv += sz*sz - (y2*sz + x2)
 	}
-	return false
+
+	return boardInv%2 == finalInv%2
+}
+
+func getInversions(state [][]int) (inv int) {
+	flat := flatten(state)
+
+	for i := range flat {
+		if flat[i] == 0 {
+			continue
+		}
+
+		invPart := flat[i+1:]
+		for j := range invPart {
+			if flat[i] > invPart[j] && invPart[j] != 0 {
+				inv++
+			}
+		}
+	}
+
+	return
+}
+
+func flatten(state [][]int) []int {
+	var flat []int
+
+	for i := range state {
+		flat = append(flat, state[i]...)
+	}
+
+	return flat
 }
 
 func hashNodeState(state nodeState) string {

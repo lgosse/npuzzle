@@ -115,6 +115,8 @@ func main() {
 		return
 	}
 
+	finalState = computeFinalState(len(puzzle.m))
+
 	if puzzle.IsValid() == false {
 		fmt.Println("Error: le puzzle n'est pas solvable")
 		return
