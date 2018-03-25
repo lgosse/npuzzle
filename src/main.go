@@ -8,37 +8,74 @@ import (
 
 func usage() string {
 	return fmt.Sprintf(
-		"usage: npuzzle [OPTION] HEURISTIC [FILE]\nAvailable heuristics:\n%s%s%s%s%s%s%s%s",
+		"usage: npuzzle [OPTION] HEURISTIC [FILE]\nAvailable heuristics:\n%s%s%s%s%s%s%s%s%s",
 		" - manhattan\n",
 		" - misplaced\n",
 		" - linear-conflict\n",
 		" - permutation\n",
 		" - tiles-out\n",
 		"\nOPTIONS:\n",
-		"  -g --greedy  Use greedy search algorithm\n",
-		"  -u --uniform Use uniform cost algorithm\n",
+		"  -g --greedy      Use greedy search algorithm. Cannot be used with --uniform.\n",
+		"  -u --uniform     Use uniform cost algorithm. Cannot be used with --greedy.\n",
+		"  -m --multithread Multithread the search algorithm.",
 	)
 }
 
 var greedySearch = false
 var uniformSearch = false
+var nbGoRoutines = 1
+
+func handleOptions(arg string) bool {
+	if strings.HasPrefix(arg, "--") {
+		if arg == OPTGREEDYLONG && !uniformSearch {
+			greedySearch = true
+
+			return true
+		} else if arg == OPTUNIFORMLONG && !greedySearch {
+			uniformSearch = true
+
+			return true
+		} else if arg == OPTMULTILONG {
+			nbGoRoutines = NBGOROUTINES
+
+			return true
+		}
+	} else if strings.HasPrefix(arg, "-") {
+		valid := true
+		for _, v := range arg {
+			if v == OPTGREEDYSHORT && !uniformSearch {
+				greedySearch = true
+			} else if v == OPTUNIFORMSHORT && !greedySearch {
+				uniformSearch = true
+			} else if v == OPTMULTISHORT {
+				nbGoRoutines = NBGOROUTINES
+			} else if v != '-' {
+				valid = false
+			}
+		}
+
+		return valid
+	}
+
+	return false
+}
 
 func handleArgs() (*Puzzle, error) {
-	heuristicIdx := 1
+	argIdx := 1
 
 	if len(os.Args) == 1 {
 		return nil, fmt.Errorf(usage())
 	}
 
-	if strings.Compare(os.Args[1], "-g") == 0 || strings.Compare(os.Args[1], "--greedy") == 0 {
-		greedySearch = true
-		heuristicIdx++
-	} else if os.Args[1] == "-u" || os.Args[1] == "--uniform" {
-		uniformSearch = true
-		heuristicIdx++
+	for len(os.Args) > argIdx && handleOptions(os.Args[argIdx]) {
+		argIdx++
 	}
 
-	switch os.Args[heuristicIdx] {
+	if len(os.Args) == argIdx {
+		return nil, fmt.Errorf(usage())
+	}
+
+	switch os.Args[argIdx] {
 	case MANHATTAN:
 		selectedHeuristic = ManhattanHeuristic
 		break
@@ -58,10 +95,10 @@ func handleArgs() (*Puzzle, error) {
 		return nil, fmt.Errorf(usage())
 	}
 
-	if len(os.Args) == heuristicIdx+1 {
+	if len(os.Args) == argIdx+1 {
 		return GeneratePuzzle(), nil
-	} else if len(os.Args) == heuristicIdx+2 {
-		return Parse(os.Args[heuristicIdx+1])
+	} else if len(os.Args) == argIdx+2 {
+		return Parse(os.Args[argIdx+1])
 	}
 
 	return nil, nil

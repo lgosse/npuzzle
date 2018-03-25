@@ -21,7 +21,7 @@ var solution = &Solution{}
 
 // Solve finds the solution (if it exists) for the provided puzzle
 func Solve(puzzle *Puzzle) error {
-	finalState = computeFinalState(puzzle.m)
+	finalState = computeFinalState(len(puzzle.m))
 	nmap := nodeMap{nodes: map[string]*node{}}
 	initialState := nmap.get(node{
 		hash:  hashNodeState(puzzle.m),
@@ -39,7 +39,7 @@ func Solve(puzzle *Puzzle) error {
 	<-done
 
 	winChan := make(chan *node, 10)
-	for i := 0; i < NBGOROUTINES; i++ {
+	for i := 0; i < nbGoRoutines; i++ {
 		go astar(pq, &nmap, winChan, 1)
 	}
 
@@ -126,8 +126,7 @@ func astar(pq *priorityQueue, nmap *nodeMap, winChan chan *node, id int) {
 	}
 }
 
-func computeFinalState(m nodeState) node {
-	l := len(m)
+func computeFinalState(l int) node {
 	f := make([][]int, l)
 	values := make([]int, l*l)
 	for i := range values {

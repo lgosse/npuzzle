@@ -5,32 +5,81 @@ import (
 	"time"
 )
 
-// GeneratePuzzle returns a valid (not certainly solvable) instance of Puzzle
-func GeneratePuzzle() *Puzzle {
-	rand.Seed(time.Now().UnixNano())
-	values, sz := generateValues()
-	m := make([][]int, sz)
+func shake(state nodeState) nodeState {
+	var x, y, tmp int
+	var dirs [4]bool
+	var dir int
 
-	for i := range m {
-		m[i] = make([]int, sz)
-		for j := range m[i] {
-			idx := rand.Intn(len(values))
-			n := values[idx]
-			values = append(values[:idx], values[idx+1:]...)
-			m[i][j] = n
+	rand.Seed(time.Now().UTC().UnixNano())
+Loop:
+	for i, ln := range state {
+		for j, v := range ln {
+			if v == 0 {
+				y, x = i, j
+
+				break Loop
+			}
 		}
 	}
 
-	return &Puzzle{m: m, s: sz}
-}
-
-func generateValues() ([]int, int) {
-	sz := rand.Intn(RNDMAXSIZE-3) + 3
-	values := make([]int, sz*sz)
-
-	for i := range values {
-		values[i] = i
+	if x != PUZZLESZ-1 {
+		dirs[RIGHT] = true
+	}
+	if x != 0 {
+		dirs[LEFT] = true
+	}
+	if y != 0 {
+		dirs[UP] = true
+	}
+	if y != PUZZLESZ-1 {
+		dirs[DOWN] = true
 	}
 
-	return values, sz
+	dir = rand.Intn(4)
+	for dirs[dir] != true {
+		dir = rand.Intn(4)
+	}
+
+	switch dir {
+	case UP:
+		{
+			tmp = state[y][x]
+			state[y][x] = state[y-1][x]
+			state[y-1][x] = tmp
+		}
+
+	case RIGHT:
+		{
+			tmp = state[y][x]
+			state[y][x] = state[y][x+1]
+			state[y][x+1] = tmp
+		}
+
+	case DOWN:
+		{
+			tmp = state[y][x]
+			state[y][x] = state[y+1][x]
+			state[y+1][x] = tmp
+		}
+
+	case LEFT:
+		{
+			tmp = state[y][x]
+			state[y][x] = state[y][x-1]
+			state[y][x-1] = tmp
+		}
+	}
+
+	return state
+}
+
+// GeneratePuzzle returns a valid (not certainly solvable) instance of Puzzle
+func GeneratePuzzle() *Puzzle {
+	state := computeFinalState(PUZZLESZ).state
+
+	for i := 0; i < NBITERATIONS; i++ {
+		state = shake(state)
+	}
+
+	return &Puzzle{m: state, s: PUZZLESZ}
 }
